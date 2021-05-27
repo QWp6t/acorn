@@ -31,12 +31,13 @@ class RegisterConsole
             return;
         }
 
-        WP_CLI::add_command('acorn', function () {
-            $args = array_slice($_SERVER['argv'], 1);
-
-            if (preg_match('/' . $this->getConfig()::ALIAS_REGEX . '/', $args[0])) {
-                $args = array_slice($args, 1);
-            }
+        WP_CLI::add_command('acorn', function ($args, $assoc_args) {
+            $args = array_merge(['acorn'], $args, collect($assoc_args)->map(function ($value, $key) {
+                if ($value === true) {
+                    return "--{$key}";
+                }
+                return "--{$key}='{$value}'";
+            })->values()->all());
 
             $kernel = $this->app->make(Kernel::class);
 
@@ -48,15 +49,5 @@ class RegisterConsole
 
             exit($status);
         });
-    }
-
-    /**
-     * Retrieve the WP CLI configuration.
-     *
-     * @return array
-     */
-    protected function getConfig()
-    {
-        return WP_CLI::get_configurator();
     }
 }
